@@ -1,0 +1,5 @@
+docker run -it --rm \
+  --shm-size=512m \
+  -p 6901:6901 \
+  -e VNC_PW=1234 \
+  image-name
