@@ -10,7 +10,7 @@ WORKDIR $HOME
 
 # Install Java
 RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk
+    apt-get install -y openjdk-8-jdk
 
 # Copy DrJava jar
 COPY drjava.jar /opt/drjava.jar
