@@ -1,0 +1,7 @@
+Paste these in the CMD from the project root
+
+wget https://downloads.arduino.cc/arduino-ide/arduino-ide_2.3.2_Linux_64bit.zip
+unzip arduino-ide_2.3.2_Linux_64bit.zip
+mv arduino-ide_2.3.2 arduino-ide
+chmod +x arduino-start.sh
+docker build -t kasm-arduino .
