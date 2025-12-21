@@ -1,0 +1,22 @@
+cores: 4
+memory: 8192
+GPU count: 1
+CPU Allocation Method: Quotas
+Volume Mapping:
+
+{
+  "/mnt/kasm-nfs/{username}": {
+    "bind": "/share",
+    "mode": "rw",
+    "uid": 1000,
+    "gid": 1000,
+    "required": true,
+    "skip_check": false
+  }
+}
+
+Docker Run Config Override:
+
+{
+  "shm_size": "4g"
+}

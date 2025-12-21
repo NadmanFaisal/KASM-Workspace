@@ -1,0 +1,14 @@
+# Replace the main logos in the Proxy
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/thumbnails/kasm.png
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/favicon.png
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/Icon_1024x1024.png
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/logo.png
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/favicon.png
+
+sudo docker cp BRAC-logo.svg kasm_proxy:/srv/www/img/logo.svg
+sudo docker cp BRAC-logo.svg kasm_proxy:/srv/www/img/headerlogo.svg
+sudo docker cp BRAC-logo.svg kasm_proxy:/srv/www/img/kasm_logo.svg
+sudo docker cp BRAC-logo.png kasm_proxy:/srv/www/img/video-poster.png
+
+# Replace the logos in the API (Just in case)
+sudo docker cp BRAC-logo.png kasm_api:/opt/kasm/current/www/favicon.ico
