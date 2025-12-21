@@ -57,50 +57,30 @@ RUN wget https://download.jetbrains.com/python/pycharm-community-2024.1.tar.gz -
     rm /tmp/pycharm.tar.gz
 
 ######### 6. Local Files (Arduino & DrJava) ###########
+RUN apt-get update && apt-get install -y unzip && apt-get clean
+
 COPY ["Arduino IDE/arduino-ide_2.3.2_Linux_64bit.zip", "/tmp/arduino.zip"]
 COPY ["Arduino IDE/arduino-start.sh", "/usr/local/bin/arduino-start.sh"]
+RUN mkdir -p /opt/arduino-ide && unzip /tmp/arduino.zip -d /opt/arduino-ide && rm /tmp/arduino.zip
+RUN chmod -R +x /opt/arduino-ide && chmod +x /usr/local/bin/arduino-start.sh
 
-# Extract the ZIP to /opt/arduino-ide
-RUN mkdir -p /opt/arduino-ide && \
-    unzip /tmp/arduino.zip -d /opt/arduino-ide && \
-    rm /tmp/arduino.zip
-
-# Fix permissions recursively and create the link
-RUN chmod -R +x /opt/arduino-ide && \
-    chmod +x /usr/local/bin/arduino-start.sh
-
-# Find the executable (it might be inside a subfolder created by unzip)
 RUN BIN_PATH=$(find /opt/arduino-ide -name "arduino-ide" -type f -executable | head -n 1) && \
-    if [ -n "$BIN_PATH" ]; then \
-        ln -s "$BIN_PATH" /usr/local/bin/arduino-ide-bin; \
-    else \
-        echo "Binary not found in /opt/arduino-ide after extraction"; exit 1; \
-    fi
+    ln -s "$BIN_PATH" /usr/local/bin/arduino-ide-bin
 
-# DrJava Setup
 COPY ["DrJava/drjava.jar", "/opt/drjava.jar"]
 RUN echo '#!/bin/bash\njava -jar /opt/drjava.jar' > /usr/local/bin/drjava && chmod +x /usr/local/bin/drjava
 
+COPY ["Arduino IDE/arduino-ide-logo.png", "/usr/share/icons/arduino-ide.png"]
+COPY ["DrJava/DrJava-logo.png", "/usr/share/icons/drjava.png"]
 ######### 7. Desktop Shortcuts & Permissions ###########
 RUN mkdir -p $HOME/Desktop && \
-    printf "[Desktop Entry]\n\
-Name=Arduino IDE\n\
-Exec=arduino-ide-bin --no-sandbox\n\
-Icon=arduino-ide\n\
-Terminal=false\n\
-Type=Application\n\
-Categories=Development;\n" > $HOME/Desktop/arduino.desktop && \
-    printf "[Desktop Entry]\nName=DrJava\nExec=drjava\nIcon=java\nTerminal=false\nType=Application\n" > $HOME/Desktop/drjava.desktop && \
-    printf "[Desktop Entry]\nName=GitHub Desktop\nExec=env --unset=LD_PRELOAD github-desktop --no-sandbox\nIcon=github-desktop\nTerminal=false\nType=Application\n" > $HOME/Desktop/github-desktop.desktop && \
-    printf "[Desktop Entry]\nName=IntelliJ IDEA\nExec=/opt/intellij/bin/idea.sh\nIcon=/opt/intellij/bin/idea.png\nTerminal=false\nType=Application\n" > $HOME/Desktop/intellij.desktop && \
-    printf "[Desktop Entry]\nName=MongoDB Compass\nExec=mongodb-compass --no-sandbox\nIcon=mongodb-compass\nTerminal=false\nType=Application\n" > $HOME/Desktop/mongodb-compass.desktop && \
-    printf "[Desktop Entry]\nName=PyCharm\nExec=pycharm\nIcon=python3\nTerminal=false\nType=Application\n" > $HOME/Desktop/pycharm.desktop && \
-    printf "[Desktop Entry]\n\
-Name=XAMPP Control Panel\n\
-Exec=sudo env --unset=LD_PRELOAD /opt/lampp/manager-linux-x64.run\n\
-Icon=utilities-terminal\n\
-Terminal=false\n\
-Type=Application\n" > $HOME/Desktop/xampp.desktop && \
+    printf "[Desktop Entry]\nName=Arduino IDE\nExec=arduino-ide-bin --no-sandbox\nIcon=arduino-ide\nTerminal=false\nType=Application\n" > $HOME/Desktop/arduino.desktop && \
+    printf "[Desktop Entry]\nName=DrJava\nExec=drjava\nIcon=drjava\nTerminal=false\nType=Application\n" > $HOME/Desktop/drjava.desktop && \
+    printf "[Desktop Entry]\nName=GitHub Desktop\nExec=env --unset=LD_PRELOAD github-desktop --no-sandbox\nIcon=github-desktop\nTerminal=false\nType=Application\nCategories=Development;\n" > $HOME/Desktop/github-desktop.desktop && \
+    printf "[Desktop Entry]\n\Name=IntelliJ IDEA\nExec=/opt/intellij/bin/idea.sh\nIcon=/opt/intellij/bin/idea.png\nTerminal=false\nType=Application\nCategories=Development;\n" > $HOME/Desktop/intellij.desktop && \
+    printf "[Desktop Entry]\nName=MongoDB Compass\nExec=mongodb-compass --no-sandbox\nIcon=mongodb-compass\nTerminal=false\nType=Application\nCategories=Development;\n" > $HOME/Desktop/mongodb-compass.desktop && \
+    printf "[Desktop Entry]\nName=PyCharm\n\Exec=pycharm\nIcon=/opt/pycharm/bin/pycharm.png\nTerminal=false\nType=Application\nCategories=Development;\n" > $HOME/Desktop/pycharm.desktop && \
+    printf "[Desktop Entry]\nName=XAMPP Control Panel\nExec=sudo env --unset=LD_PRELOAD /opt/lampp/manager-linux-x64.run\nIcon=utilities-terminal\nTerminal=false\nType=Application\n" > $HOME/Desktop/xampp.desktop && \
     chmod +x $HOME/Desktop/*.desktop
 
 # Final Permissions
