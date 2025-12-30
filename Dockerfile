@@ -25,18 +25,34 @@ RUN groupadd -f wireshark && \
     chmod 750 /usr/bin/dumpcap && \
     setcap 'CAP_NET_RAW+eip CAP_NET_ADMIN+eip' /usr/bin/dumpcap
 
+RUN chmod -R 777 /opt/lampp/var && \
+    chown -R 1000:0 /opt/lampp/htdocs && \
+    chmod -R 775 /opt/lampp/htdocs
+
 ######### 2. Languages & Node.js (Python, Java, Node, Spyder Dependencies) ###########
 # Install Node.js LTS and system dependencies
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get update && apt-get install -y --no-install-recommends \
     nodejs openjdk-8-jdk openjdk-11-jdk python3 python3-pip python3-venv \
-    gcc g++ gdb build-essential pypy3 composer firefox libreoffice obs-studio \
+    libreoffice libreoffice-gtk3 libreoffice-java-common \
+    libxinerama1 libgl1-mesa-glx libxslt1.1 \
+    gcc g++ gdb build-essential pypy3 composer firefox obs-studio \
     # CRITICAL: Pre-compiled system dependencies for Spyder/PyQt5
+    python3-nbconvert python3-qtconsole \
+    pandoc texlive-xetex \
     python3-pyqt5 python3-pyqt5.qtwebengine spyder \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Jupyter & Spyder Kernels via Pip (Safe as they don't require Qt build)
-RUN pip3 install --no-cache-dir jupyter spyder-kernels
+RUN pip3 install --no-cache-dir \
+    "jupyter_server<2.0.0" \
+    "jupyter-events<=0.9.0" \
+    "nbconvert>=4.0" \
+    "spyder-kernels<1.0" \
+    "qtconsole<5.0" \
+    "entrypoints" \
+    "jupyter"
+
+# RUN pip3 install --no-cache-dir jupyter spyder-kernels nbconvert qtconsole
 
 ######### 3. VS Code & Extensions (For All Users) ###########
 RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg && \
@@ -72,6 +88,8 @@ RUN wget https://download.jetbrains.com/python/pycharm-community-2024.1.tar.gz -
 
 ######### 6. Android Studio & Flutter/Kotlin Setup ###########
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libx11-6 libxext6 libxrender1 libice6 libsm6 libxt6 libnss3 libgbm1 \
+    libcups2 libpulse0 libasound2 \
     lib32z1 lib32ncurses6 lib32stdc++6 libbz2-1.0:i386 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -131,6 +149,9 @@ RUN echo '#!/bin/bash\n/opt/pt/bin/PacketTracer --no-sandbox --appimage-extract-
 
 ######### 10. Desktop Shortcuts & Permissions ###########
 RUN mkdir -p $HOME/Desktop && \
+    printf "XAMPP TERMINAL COMMANDS\n\nTo START all services:\nsudo /opt/lampp/lampp start\n\nTo STOP all services:\nsudo /opt/lampp/lampp stop\n\nTo RESTART:\nsudo /opt/lampp/lampp restart\n" > $HOME/Desktop/xampp_command.txt && \
+    chown 1000:0 $HOME/Desktop/xampp_command.txt && \
+    chmod 644 $HOME/Desktop/xampp_command.txt && \
     printf "[Desktop Entry]\nName=VS Code\nExec=code --no-sandbox\nIcon=vscode\nType=Application\n" > $HOME/Desktop/vscode.desktop && \
     printf "[Desktop Entry]\nName=Arduino IDE\nExec=arduino-ide-bin --no-sandbox\nIcon=arduino-ide\nType=Application\n" > $HOME/Desktop/arduino.desktop && \
     printf "[Desktop Entry]\nName=DrJava\nExec=drjava\nIcon=drjava\nType=Application\n" > $HOME/Desktop/drjava.desktop && \
@@ -144,7 +165,7 @@ RUN mkdir -p $HOME/Desktop && \
     printf "[Desktop Entry]\nName=Postman\nExec=env --unset=LD_PRELOAD postman --no-sandbox\nIcon=/opt/Postman/app/resources/app/assets/icon.png\nType=Application\n" > $HOME/Desktop/postman.desktop && \
     printf "[Desktop Entry]\nName=Cisco Packet Tracer 8.2.1\nExec=/usr/bin/packettracer\nIcon=utilities-terminal\nType=Application\n" > $HOME/Desktop/packettracer.desktop && \
     printf "[Desktop Entry]\nName=Wireshark\nExec=wireshark\nIcon=wireshark\nType=Application\n" > $HOME/Desktop/wireshark.desktop && \
-    printf "[Desktop Entry]\nName=Jupyter Notebook\nExec=/usr/local/bin/jupyter-notebook --no-browser --ip=0.0.0.0 --notebook-dir=/home/kasm-user --allow-root\nIcon=jupyter\nType=Application\n" > $HOME/Desktop/jupyter.desktop && \
+    printf "[Desktop Entry]\nName=Jupyter Notebook\nExec=/usr/local/bin/jupyter-notebook --ip=0.0.0.0 --NotebookApp.token='' --allow-root\nIcon=jupyter\nType=Application\n" > $HOME/Desktop/jupyter.desktop && \
     chmod +x $HOME/Desktop/*.desktop
 
 # Final Permissions
