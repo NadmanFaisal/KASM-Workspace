@@ -33,15 +33,26 @@ RUN chmod -R 777 /opt/lampp/var && \
 # Install Node.js LTS and system dependencies
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get update && apt-get install -y --no-install-recommends \
-    nodejs openjdk-8-jdk openjdk-11-jdk python3 python3-pip python3-venv \
-    libreoffice libreoffice-gtk3 libreoffice-java-common \
-    libxinerama1 libgl1-mesa-glx libxslt1.1 \
+    nodejs \
+    openjdk-11-jdk \ 
+    python3 python3-pip python3-venv \
+    libreoffice \
+    libreoffice-gtk3 \
+    libreoffice-gnome \
+    libreoffice-java-common \
+    libuno-cppuhelpergcc3-3 \
+    libunwind8 \
+    dbus-x11 libxinerama1 libgl1-mesa-glx libxslt1.1 \
     gcc g++ gdb build-essential pypy3 composer firefox obs-studio \
-    # CRITICAL: Pre-compiled system dependencies for Spyder/PyQt5
     python3-nbconvert python3-qtconsole \
     pandoc texlive-xetex \
     python3-pyqt5 python3-pyqt5.qtwebengine spyder \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN echo "/usr/lib/libreoffice/program" > /etc/ld.so.conf.d/libreoffice.conf && \
+    ldconfig
+
+RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
 
 RUN pip3 install --no-cache-dir \
     "jupyter_server<2.0.0" \
@@ -148,10 +159,17 @@ RUN echo '#!/bin/bash\n/opt/pt/bin/PacketTracer --no-sandbox --appimage-extract-
     chmod +x /usr/bin/packettracer
 
 ######### 10. Desktop Shortcuts & Permissions ###########
+RUN find /usr/share/applications/ -name "libreoffice*.desktop" -exec sed -i 's/^Exec=libreoffice/Exec=env LD_LIBRARY_PATH=\/usr\/lib\/libreoffice\/program:\/usr\/lib\/x86_64-linux-gnu\/ libreoffice/g' {} +
+
+RUN mkdir -p $HOME/.config && \
+    printf "[Default Applications]\ntext/plain=libreoffice-writer.desktop;\n" > $HOME/.config/mimeapps.list && \
+    chown -R 1000:0 $HOME/.config
+
 RUN mkdir -p $HOME/Desktop && \
     printf "XAMPP TERMINAL COMMANDS\n\nTo START all services:\nsudo /opt/lampp/lampp start\n\nTo STOP all services:\nsudo /opt/lampp/lampp stop\n\nTo RESTART:\nsudo /opt/lampp/lampp restart\n" > $HOME/Desktop/xampp_command.txt && \
     chown 1000:0 $HOME/Desktop/xampp_command.txt && \
     chmod 644 $HOME/Desktop/xampp_command.txt && \
+    printf "[Desktop Entry]\nName=LibreOffice Writer\nExec=env LD_LIBRARY_PATH=/usr/lib/libreoffice/program:/usr/lib/x86_64-linux-gnu/ libreoffice --writer %%U\nIcon=libreoffice-writer\nType=Application\n" > $HOME/Desktop/libreoffice-writer.desktop && \
     printf "[Desktop Entry]\nName=VS Code\nExec=code --no-sandbox\nIcon=vscode\nType=Application\n" > $HOME/Desktop/vscode.desktop && \
     printf "[Desktop Entry]\nName=Arduino IDE\nExec=arduino-ide-bin --no-sandbox\nIcon=arduino-ide\nType=Application\n" > $HOME/Desktop/arduino.desktop && \
     printf "[Desktop Entry]\nName=DrJava\nExec=drjava\nIcon=drjava\nType=Application\n" > $HOME/Desktop/drjava.desktop && \
