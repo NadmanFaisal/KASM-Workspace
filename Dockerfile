@@ -34,7 +34,7 @@ RUN chmod -R 777 /opt/lampp/var && \
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
-    openjdk-11-jdk \ 
+    openjdk-11-jdk \
     python3 python3-pip python3-venv \
     libreoffice \
     libreoffice-gtk3 \
@@ -141,22 +141,31 @@ RUN wget https://dl.pstmn.io/download/version/9.31.28/linux64 -O /tmp/postman.ta
 ######### 9. Cisco Packet Tracer 8.2.1 (Force-EULA Fix) ###########
 COPY ["Cisco/CiscoPacketTracer_821_Ubuntu_64bit.deb", "/tmp/pt.deb"]
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository -y universe && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    debconf-utils libgl1-mesa-glx libegl1 libxcb-xinerama0 \
     libdouble-conversion3 libqt5gui5 libqt5network5 libqt5widgets5 \
     libqt5printsupport5 libqt5xml5 libqt5multimedia5 libqt5multimediawidgets5 \
     libqt5sql5 libqt5svg5 libqt5x11extras5 libqt5serialport5 libqt5websockets5 \
     libqt5core5a libqt5dbus5 libqt5positioning5 libqt5quick5 libqt5webchannel5 \
     libqt5webenginecore5 libqt5webengine5 libqt5webenginewidgets5 \
-    libqt5networkauth5 debconf-utils && \
+    libqt5networkauth5 libqt5script5 libqt5scripttools5 libqt5texttospeech5 \
+    libqt5qml5 libqt5quickwidgets5 libqt5opengl5 \
+    libnss3 libasound2 libdbus-1-3 libxkbcommon-x11-0 \
+    libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+    libxcb-render-util0 libxcb-xinput0 libxcb-xfixes0 && \
     echo "packettracer packettracer/accept-eula select true" | debconf-set-selections && \
-    DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/pt.deb || DEBIAN_FRONTEND=noninteractive apt-get install -y -f && \
-    if [ ! -d "/opt/pt/bin" ]; then \
-        mkdir -p /opt/pt && dpkg-deb -x /tmp/pt.deb /; \
+    dpkg -i /tmp/pt.deb || apt-get install -y -f && \
+    if [ ! -f "/opt/pt/bin/PacketTracer" ]; then \
+        dpkg-deb -x /tmp/pt.deb / ; \
     fi && \
     rm /tmp/pt.deb
 
-RUN echo '#!/bin/bash\n/opt/pt/bin/PacketTracer --no-sandbox --appimage-extract-and-run "$@"' > /usr/bin/packettracer && \
-    chmod +x /usr/bin/packettracer
+RUN printf '#!/bin/bash\nexport LD_LIBRARY_PATH=/opt/pt/bin:$LD_LIBRARY_PATH\nexec /opt/pt/bin/PacketTracer --no-sandbox "$@"\n' > /usr/local/bin/packettracer && \
+    chmod +x /usr/local/bin/packettracer
 
 ######### 10. Desktop Shortcuts & Permissions ###########
 RUN find /usr/share/applications/ -name "libreoffice*.desktop" -exec sed -i 's/^Exec=libreoffice/Exec=env LD_LIBRARY_PATH=\/usr\/lib\/libreoffice\/program:\/usr\/lib\/x86_64-linux-gnu\/ libreoffice/g' {} +
@@ -181,7 +190,7 @@ RUN mkdir -p $HOME/Desktop && \
     printf "[Desktop Entry]\nName=Spyder\nExec=spyder\nIcon=spyder\nType=Application\nCategories=Development;IDE;\n" > $HOME/Desktop/spyder.desktop && \
     printf "[Desktop Entry]\nName=Android Studio\nExec=android-studio\nIcon=/opt/android-studio/bin/studio.png\nType=Application\nCategories=Development;IDE;\n" > $HOME/Desktop/android-studio.desktop && \
     printf "[Desktop Entry]\nName=Postman\nExec=env --unset=LD_PRELOAD postman --no-sandbox\nIcon=/opt/Postman/app/resources/app/assets/icon.png\nType=Application\n" > $HOME/Desktop/postman.desktop && \
-    printf "[Desktop Entry]\nName=Cisco Packet Tracer 8.2.1\nExec=/usr/bin/packettracer\nIcon=utilities-terminal\nType=Application\n" > $HOME/Desktop/packettracer.desktop && \
+    printf "[Desktop Entry]\nName=Cisco Packet Tracer\nExec=/usr/local/bin/packettracer\nIcon=/opt/pt/art/app.png\nType=Application\n" > $HOME/Desktop/packettracer.desktop && \
     printf "[Desktop Entry]\nName=Wireshark\nExec=wireshark\nIcon=wireshark\nType=Application\n" > $HOME/Desktop/wireshark.desktop && \
     printf "[Desktop Entry]\nName=Jupyter Notebook\nExec=/usr/local/bin/jupyter-notebook --ip=0.0.0.0 --NotebookApp.token='' --allow-root\nIcon=jupyter\nType=Application\n" > $HOME/Desktop/jupyter.desktop && \
     chmod +x $HOME/Desktop/*.desktop
